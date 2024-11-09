@@ -221,13 +221,12 @@ def main():
             chemSpecies = np.concatenate((chemSpecies,chemSpecies_temp), axis=0)
 
             #calculate atomic displacements
-            ai_temp,aj_temp,d_temp,D_temp=getAtomicDisplacements(relaxed,contcar)
+            ai_temp,d_temp,D_temp=getAtomicDisplacements(relaxed,contcar)
 
             #vertically stacking atomic displacements
             d  = np.concatenate((d,  d_temp ), axis=0)
             D  = np.concatenate((D,  D_temp ), axis=0) 
             ai = np.concatenate((ai, ai_temp), axis=0)
-            aj = np.concatenate((aj, aj_temp), axis=0)
 
     plotDisplacements(ai,chemSpecies,d,D,'./CONTCAR')
 
