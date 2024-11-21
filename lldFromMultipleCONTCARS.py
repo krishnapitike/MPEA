@@ -14,10 +14,10 @@ import pandas as pd
 #calculating l21 norm
 def l2_1_norm(matrix):
     # Calculate the L2 norm of each row
-    row_norms = np.linalg.norm(matrix, axis=1)
-    #column_norms = np.linalg.norm(matrix, axis=0)
+    #row_norms = np.linalg.norm(matrix, axis=1)
+    column_norms = np.linalg.norm(matrix, axis=0)
     # Sum the row norms to get the L2,1 norm
-    return np.sum(row_norms)
+    return np.sum(column_norms)
 
 #calculate ceter of mass by calculating periodic images of atoms close to periodic boundaries
 def get_com(atoms,sc):
@@ -70,7 +70,8 @@ def get_com(atoms,sc):
 def calculateVEC(chemSpecies):
     valenceElectrons={\
         ('Cr',6), ('Ti',4), ('V',5), ('W',6), \
-        ('Nb',5), ('Zr',4), ('Ta',5), ('Mo',6)\
+        ('Nb',5), ('Zr',4), ('Ta',5), ('Mo',6),\
+        ('Al',3)\
         } #valence electrons
     sum=0
     for key,value in valenceElectrons: 
@@ -81,7 +82,8 @@ def calculateVEC(chemSpecies):
 def calculateLatticeMismatch(chemSpecies):
     metallicRadii={\
         ('Cr',1.28), ('Ti',1.47), ('V',1.34), ('W',1.39), \
-        ('Nb',1.46), ('Zr',1.60), ('Ta',1.46), ('Mo',1.39)\
+        ('Nb',1.46), ('Zr',1.60), ('Ta',1.46), ('Mo',1.39),\
+        ('Al',1.43)\
         } #angstroms
     natm=len(chemSpecies)
     averageRadii=0
@@ -191,49 +193,60 @@ def getAtomicDisplacements(atoms,contcar):
 def main():
 
     #collecting all contcars
-    contcars=glob('**/CONTCAR')
+    contcars=glob('**/CONTCAR',recursive=1)
+
     #looping through all contcars
     for icontcar,contcar in enumerate(contcars):
 
-        #reading the contcar
-        relaxed=read(contcar)
+        if ('backup' not in contcar):
 
-        #since VEC and lattice mismatch only depends on chemical composition
-        #calculating them only once for each composition
-        if(icontcar==0):
-            
-            #getting chemical symbols
-            chemSpecies=relaxed.get_chemical_symbols()
+            #reading the contcar
+            relaxed=read(contcar)
 
-            #block to calculate valence electron concentration (VEC)
-            vec=calculateVEC(chemSpecies)
-            
-            #block to calculate lattice mismatch
-            latticeMismatch=calculateLatticeMismatch(chemSpecies)
+            #since VEC and lattice mismatch only depends on chemical composition
+            #calculating them only once for each composition
+            if(icontcar==0):
+                
+                #getting chemical symbols
+                chemSpecies=relaxed.get_chemical_symbols()
 
-            #calculate atomic displacements
-            ai,d,D=getAtomicDisplacements(relaxed,contcar)
+                #block to calculate valence electron concentration (VEC)
+                w_vec=calculateVEC(chemSpecies)
+                
+                #block to calculate lattice mismatch
+                latticeMismatch=calculateLatticeMismatch(chemSpecies)
 
-        else:
-            
-            #getting chemical symbols
-            chemSpecies_temp=relaxed.get_chemical_symbols()
-            chemSpecies = np.concatenate((chemSpecies,chemSpecies_temp), axis=0)
+                #calculate atomic displacements
+                ai,d,D=getAtomicDisplacements(relaxed,contcar)
 
-            #calculate atomic displacements
-            ai_temp,d_temp,D_temp=getAtomicDisplacements(relaxed,contcar)
+            else:
+                
+                #getting chemical symbols
+                chemSpecies_temp=relaxed.get_chemical_symbols()
+                chemSpecies = np.concatenate((chemSpecies,chemSpecies_temp), axis=0)
 
-            #vertically stacking atomic displacements
-            d  = np.concatenate((d,  d_temp ), axis=0)
-            D  = np.concatenate((D,  D_temp ), axis=0) 
-            ai = np.concatenate((ai, ai_temp), axis=0)
+                #calculate atomic displacements
+                ai_temp,d_temp,D_temp=getAtomicDisplacements(relaxed,contcar)
+
+                #vertically stacking atomic displacements
+                d  = np.concatenate((d,  d_temp ), axis=0)
+                D  = np.concatenate((D,  D_temp ), axis=0) 
+                ai = np.concatenate((ai, ai_temp), axis=0)
 
     plotDisplacements(ai,chemSpecies,d,D,'./CONTCAR')
+    #mean_d=np.mean(d)
+    #l21norm_D=l2_1_norm(D)
+    #lld = w_vec * mean_d/l21norm_D
 
+    mean_d=np.mean(d)
+    l21norm_D=l2_1_norm(D)
+    lld = w_vec * mean_d/l21norm_D
 
-    print("valence electron concentration = {:0.3e}".format(vec))
-    print("lattice mismatch               = {:0.3e}".format(latticeMismatch))
-    print("")
+    print("               lattice mismatch, $\\delta=$ {:0.3f}".format(latticeMismatch))
+    print("average of displacement norms, $\\Delta u=$ {:0.3f}".format(mean_d))
+    print("          $l_{{2,1}} norm of disaplcements=$ {:0.3f}".format(l21norm_D))
+    print("                    $\\omega_\\mathrm{{VEC}}=$ {:0.3f}".format(w_vec))
+    print("                                    $lld=$ {:0.3f}".format(lld))
 
 if __name__ == "__main__":
     main()
