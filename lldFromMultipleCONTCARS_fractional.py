@@ -206,7 +206,13 @@ def getAtomicDisplacements(atoms,contcar):
     ai=ai[:natm]
     aj=aj[:natm]
     d=d[:natm]
-    D=D[:natm]
+    D=D[:natm]/np.array([relaxed_cell[0,0],relaxed_cell[1,1],relaxed_cell[2,2]])
+
+    #making fraction d from D
+    d=[]
+    for i,val in enumerate(D):
+        d.append(np.sqrt(val[0]**2+val[1]**2+val[2]**2))
+    d=np.array(d)
 
     #block to plot histogram of displacements and
     #to identify which species has highest atomic displacements based on j
@@ -242,7 +248,6 @@ def main():
                 
                 #getting chemical symbols
                 chemSpecies=relaxed.get_chemical_symbols()
-                
 
                 #block to calculate valence electron concentration (VEC)
                 w_vec=calculateVEC(chemSpecies)
@@ -273,14 +278,14 @@ def main():
     #lld = w_vec * mean_d/l21norm_D
 
     mean_d=np.mean(d)
-    l21norm_D=l2_1_norm(D)
+    l21norm_D=l2_1_norm_alt(D)
     lld = w_vec * mean_d/l21norm_D
 
-    #print("               lattice mismatch, $\\delta=$ {:0.3f}".format(latticeMismatch))
-    #print("average of displacement norms, $\\Delta u=$ {:0.3f}".format(mean_d))
+    print("               lattice mismatch, $\\delta=$ {:0.3f}".format(latticeMismatch))
+    print("average of displacement norms, $\\Delta u=$ {:0.3f}".format(mean_d))
     print("          $l_{{2,1}} norm of disaplcements=$ {:0.3f}".format(l21norm_D))
-    #print("                    $\\omega_\\mathrm{{VEC}}=$ {:0.3f}".format(w_vec))
-    #print("                                    $lld=$ {:0.3f}".format(lld))
+    print("                    $\\omega_\\mathrm{{VEC}}=$ {:0.3f}".format(w_vec))
+    print("                                    $lld=$ {:0.3f}".format(lld))
 
 if __name__ == "__main__":
     main()
