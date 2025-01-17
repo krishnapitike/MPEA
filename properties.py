@@ -131,20 +131,24 @@ def calculateVEC(chemSpecies):
     valenceElectrons={\
         ('Cr',6), ('Ti',4), ('V',5), ('W',6), \
         ('Nb',5), ('Zr',4), ('Ta',5), ('Mo',6),\
-        ('Al',3)\
+        ('Al',3), ('Hf',4), ('Re',7) \
         } #valence electrons
     sum=0
     for key,value in valenceElectrons: 
         sum += chemSpecies.count(key) * value
     return(sum/len(chemSpecies))
 
+#Cr	Hf	Mo	Nb	Re	Ta	Ti	V	W	Zr
+
 # %% calculating lattice mismatch
 ##################################################################################################
 def calculateLatticeMismatch(chemSpecies):
+    #https://pubs.acs.org/doi/abs/10.1021/j100785a001
+    #https://en.wikipedia.org/wiki/Atomic_radii_of_the_elements_(data_page)#Note_b
     metallicRadii={\
         ('Cr',1.28), ('Ti',1.47), ('V',1.34), ('W',1.39), \
         ('Nb',1.46), ('Zr',1.60), ('Ta',1.46), ('Mo',1.39),\
-        ('Al',1.43)\
+        ('Al',1.43), ('Hf',1.59), ('Re',1.37) \
         } #angstroms
     natm=len(chemSpecies)
     averageRadii=0
@@ -177,7 +181,7 @@ def calculateFormationEnthalpy(chemSpecies,contcar):
     totalChemicalPotential=0
     for key,value in chemicalPotentials: 
         totalChemicalPotential += chemSpecies.count(key) * value
-    formationEnthalpy=E-totalChemicalPotential
+    formationEnthalpy=(E-totalChemicalPotential)/natm
     return(formationEnthalpy)
 
 # %% calculate supercell size based on lattice constants and number of atoms
@@ -348,9 +352,9 @@ def plotDisplacements(ai,chemSpecies,d,D,contcar):
 def write_csv(file_path,data):
     header=['chemical formula','formation enthalpy, E_f','lattice constant, a0',\
           'lattice mismatch, delta','valence electron concentration, vec',\
-          'average displacement, <u>','displacement l21 norm, l21_norm_d',\
+          'average displacement, <u>','displacement l21 norm, l21_norm_u', '<u>/l21_norm_u',\
           'local lattice displacement, lld','total occupied states, g_occ',\
-          'total bonding states, g_bond','g_occ/g_bond',"Hartigan's dip, dip"]
+          'total bonding states, g_bond','g_occ/g_bond',"Hartigan's dip, dip", 'epsilon_p']
     with open(file_path, mode="w", newline="") as file:
         writer = csv.writer(file)
 
@@ -360,6 +364,18 @@ def write_csv(file_path,data):
         # Write the data rows
         writer.writerows(data)
     return()
+
+# %% # epsilon_p model
+##################################################################################################
+#epsilon_p = peak true strain before fracture
+#BSD = bonding state depletion = gocc/gbond
+def ep_polymodel(BSD):
+    epsilon_p=-13706.12*(BSD)**3 + 38196.22*(BSD)**2 - 35519.70*(BSD) + 11025.99
+    if (epsilon_p>1):
+        return( epsilon_p )
+    else:
+        return( None )
+
 
 # %% main function
 ##################################################################################################
@@ -401,6 +417,7 @@ def main():
             #calculating ldos, g_occ/g_bond, dip and plotting ldos
             doscar=contcar.replace('CONTCAR','/ldos/DOSCAR') #creaing path to doscar
             ldosplot=contcar.replace('CONTCAR','ldos/ldos.png') #creating path to plot
+            #calculating if DOSCAR is present at ldos/DOSCAR 
             if os.path.isfile(doscar):
                 with open(doscar, 'r') as file: line_count = len(file.readlines())
                 if (line_count>0):
@@ -408,6 +425,7 @@ def main():
                     ##calculating descriptors and plotting
                     g_occ, g_bond, dip = plot_dos(energy, total_dos, d_ldos, chemFormula, output_file=ldosplot)
                     g_occ_over_g_bond = g_occ/g_bond
+            #setting electronic descriptors to None if DOSCAR is absent at ldos/DOSCAR
             else:
                 g_occ, g_bond, dip = None, None, None
                 g_occ_over_g_bond= None
@@ -427,7 +445,20 @@ def main():
             l21_norm=l2_1_norm(D)
             lld=w_vec*average_d/l21_norm
 
-            data.append([chemFormula,formationEnthalpy,a0,latticeMismatch,vec,average_d,l21_norm,lld,g_occ,g_bond,g_occ_over_g_bond,dip])
+            data.append([chemFormula,\
+                        formationEnthalpy,\
+                        a0,\
+                        latticeMismatch,\
+                        vec,\
+                        average_d,\
+                        l21_norm,\
+                        average_d/l21_norm,\
+                        lld,\
+                        g_occ,\
+                        g_bond,\
+                        g_occ_over_g_bond,\
+                        dip,\
+                        ep_polymodel(g_occ_over_g_bond)])
     write_csv('./data.csv',data)
 
 # %% calling main
