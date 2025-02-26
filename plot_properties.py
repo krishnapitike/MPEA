@@ -159,3 +159,20 @@ fig.savefig('properties.png')
 
 fig1.savefig('model.png')
 
+fig2, axes2 = plt.subplots()
+axes2.scatter(data[:,4],data[:,11])
+axes2.legend(frameon=0)
+axes2.set_xlabel('VEC')
+axes2.set_ylabel(header[11])
+#axes2.set_xlim([0.3,1])
+#axes2.set_ylim([-1,20])
+axes2.xaxis.set_minor_locator(AutoMinorLocator())
+axes2.yaxis.set_minor_locator(AutoMinorLocator())
+axes2.grid(alpha=0.4,which='major',linewidth=0.5)
+axes2.grid(alpha=0.2,which='minor',linewidth=0.2)
+axes2.tick_params(axis='both',which='both',direction='in',colors='k',\
+        bottom=True,top=True,left=True,right=True,\
+        #labelbottom=True, labeltop=True, labelleft=True, labelright=True,\
+        labelrotation=0)
+fig2.tight_layout()
+fig2.savefig('vec_bsd.png')
