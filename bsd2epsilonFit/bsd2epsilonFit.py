@@ -6,7 +6,7 @@ from sklearn.preprocessing import PolynomialFeatures
 from sklearn.metrics import r2_score
 
 # Load data from the file
-file_path = "test.txt"  # Replace with your actual file path
+file_path = "../data/Borges.txt"  # Replace with your actual file path
 df = pd.read_csv(file_path, sep="\t")
 
 # Filter the rows where gocc/gbond is between 0.77 and 0.975
@@ -94,5 +94,5 @@ plt.grid(True)
 
 # Save and show the combined plot
 plt.tight_layout()
-plt.savefig("combined_fit_plot_with_r2.png")
+plt.savefig("bsd2epsilonFit.png")
 plt.show()
