@@ -1,4 +1,4 @@
-epsilon_p [%]	VEC [e-]	gamma_s  [mJ/m2]	gamma_us [mJ/m2]	a0 [Å]	Ecoh [eV/atom]	gocc/gbond	dip
+epsilon_p [%]	VEC [e-]	gamma_s  [mJ/m2]	gamma_us [mJ/m2]	a0 [Ang]	Ecoh [eV/atom]	gocc/gbond	dip
 4	6.35	3114	1119	2.948	-10.46	1.065	0.035
 4	4.6	2069	550	3.328	-9.04	0.921	0.018
 1	5.6	2742	1210	3.164	-11.05	0.973	0.021
